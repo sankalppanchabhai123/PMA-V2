@@ -8,7 +8,7 @@ import CreateProjectDialog from '../components/CreateProjectDialog'
 
 const Dashboard = () => {
 
-    const user = { fullName: 'User' }
+    const user = { fullName: 'Sankalp' }
     const [isDialogOpen, setIsDialogOpen] = useState(false)
 
     return (
