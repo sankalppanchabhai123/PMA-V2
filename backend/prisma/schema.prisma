@@ -74,7 +74,7 @@ model Workspace {
 }
 
 model WorkspaceMember {
-    id          String        @id @default(uuid())
+    id          String        @id @default(cuid())
     userId      String
     workspaceId String
     message     String        @default("")
@@ -86,7 +86,7 @@ model WorkspaceMember {
 }
 
 model Project {
-    id          String          @id @default(uuid())
+    id          String          @id @default(cuid())
     name        String
     description String?
     priority    Priority        @default(MEDIUM)
@@ -106,7 +106,7 @@ model Project {
 }
 
 model ProjectMember {
-    id        String  @id @default(uuid())
+    id        String  @id @default(cuid())
     userId    String
     projectId String
     user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -116,7 +116,7 @@ model ProjectMember {
 }
 
 model Task {
-    id          String     @id @default(uuid())
+    id          String     @id @default(cuid())
     projectId   String
     title       String
     description String?
@@ -134,7 +134,7 @@ model Task {
 }
 
 model Comment {
-    id        String   @id @default(uuid())
+    id        String   @id @default(cuid())
     content   String
     userId    String
     taskId    String
