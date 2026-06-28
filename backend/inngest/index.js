@@ -12,7 +12,6 @@ const syncUserCreation = inngest.createFunction(
             throw new Error('Invalid user data');
         }
 
-        // Check if user already exists (idempotency)
         const existingUser = await prisma.user.findUnique({
             where: { id: data.id }
         });
@@ -47,7 +46,6 @@ const syncUserDeletion = inngest.createFunction(
             throw new Error('User ID is required for deletion');
         }
 
-        // Use deleteMany which won't throw if record doesn't exist
         const result = await prisma.user.deleteMany({
             where: {
                 id: data.id
@@ -70,13 +68,11 @@ const syncUserUpdation = inngest.createFunction(
             throw new Error('Invalid user data for update');
         }
 
-        // Check if user exists before update
         const existingUser = await prisma.user.findUnique({
             where: { id: data.id }
         });
 
         if (!existingUser) {
-            // If user doesn't exist, create them (or log and skip)
             console.log(`User ${data.id} not found for update, creating instead`);
 
             await prisma.user.create({
@@ -110,84 +106,172 @@ const syncUserUpdation = inngest.createFunction(
     },
 );
 
-// function to webhook
+// ✅ FIXED: Workspace Creation
 const syncWorkspaceCreation = inngest.createFunction(
-    { id: 'sync-workspace-from-clerk' },
-    { event: 'clerk/organization.created' },
+    {
+        id: 'sync-workspace-from-clerk',
+        triggers: [{ event: 'clerk/organization.created' }]
+    },
     async ({ event }) => {
         const { data } = event;
+
+        // Check if workspace already exists
+        const existingWorkspace = await prisma.workspace.findUnique({
+            where: { id: data.id }
+        });
+
+        if (existingWorkspace) {
+            console.log(`Workspace ${data.id} already exists, skipping creation`);
+            return { message: `Workspace already exists: ${data.id}` };
+        }
+
         await prisma.workspace.create({
             data: {
                 id: data.id,
                 name: data.name,
                 slug: data.slug,
-                ownerId: data.ownerId,
-                image_url: data.image_url,
+                ownerId: data.created_by,
+                image_url: data.image_url || '',
             }
-        })
-        // Add creater as admin member
+        });
+
+        // Add creator as admin member
         await prisma.workspaceMember.create({
             data: {
                 userId: data.created_by,
                 workspaceId: data.id,
                 role: 'ADMIN',
             }
-        })
-    }
-)
+        });
 
+        return { message: `Workspace created: ${data.id}` };
+    }
+);
+
+// ✅ FIXED: Workspace Update
 const syncWorkspaceUpdation = inngest.createFunction(
-    { id: 'upate-workspace-from-clerk' },
-    { event: 'clerk/organization.updated' },
+    {
+        id: 'update-workspace-from-clerk',
+        triggers: [{ event: 'clerk/organization.updated' }]
+    },
     async ({ event }) => {
         const { data } = event;
+
+        // Check if workspace exists
+        const existingWorkspace = await prisma.workspace.findUnique({
+            where: { id: data.id }
+        });
+
+        if (!existingWorkspace) {
+            console.log(`Workspace ${data.id} not found for update`);
+            return { message: `Workspace not found: ${data.id}` };
+        }
+
         await prisma.workspace.update({
             where: {
                 id: data.id
             },
             data: {
-                id: data.id,
                 name: data.name,
                 slug: data.slug,
-                image_url: data.image_url,
+                image_url: data.image_url || '',
             }
-        })
-    }
-)
+        });
 
+        return { message: `Workspace updated: ${data.id}` };
+    }
+);
+
+// ✅ FIXED: Workspace Deletion
 const syncWorkspaceDeletion = inngest.createFunction(
-    { id: 'delete-workspace-from-clerk' },
-    { event: 'clerk/organization.deleted' },
+    {
+        id: 'delete-workspace-from-clerk',
+        triggers: [{ event: 'clerk/organization.deleted' }]
+    },
     async ({ event }) => {
         const { data } = event;
-        await prisma.workspace.deleted({
+
+        // Use deleteMany for safe deletion
+        const result = await prisma.workspace.deleteMany({
             where: {
                 id: data.id
-            },
-            data: {
-                id: data.id,
-                name: data.name,
-                slug: data.slug,
-                image_url: data.image_url,
             }
-        })
-    }
-)
+        });
 
-const syncWorkspaceMemeberCreation = inngest.createFunction(
-    { id: 'sync-workspace-member-from-clerk' },
-    { event: 'clerk/organization.accepted' },
+        // Also delete all workspace members
+        if (result.count > 0) {
+            await prisma.workspaceMember.deleteMany({
+                where: {
+                    workspaceId: data.id
+                }
+            });
+        }
+
+        return {
+            message: result.count > 0 ? `Workspace deleted: ${data.id}` : `Workspace not found: ${data.id}`,
+            deleted: result.count > 0
+        };
+    }
+);
+
+// ✅ FIXED: Workspace Member Creation
+const syncWorkspaceMemberCreation = inngest.createFunction(
+    {
+        id: 'sync-workspace-member-from-clerk',
+        triggers: [{ event: 'clerk/organization.accepted' }]
+    },
     async ({ event }) => {
         const { data } = event;
+
+        // Check if member already exists
+        const existingMember = await prisma.workspaceMember.findUnique({
+            where: {
+                userId_workspaceId: {
+                    userId: data.user_id,
+                    workspaceId: data.organization_id
+                }
+            }
+        });
+
+        if (existingMember) {
+            console.log(`Member ${data.user_id} already in workspace ${data.organization_id}`);
+            return { message: 'Member already exists' };
+        }
+
         await prisma.workspaceMember.create({
             data: {
                 userId: data.user_id,
                 workspaceId: data.organization_id,
                 role: String(data.role_name).toUpperCase(),
             }
-        })
+        });
+
+        return { message: `Workspace member added: ${data.user_id}` };
     }
-)
+);
+
+// ✅ FIXED: Workspace Member Deletion (Bonus)
+const syncWorkspaceMemberDeletion = inngest.createFunction(
+    {
+        id: 'sync-workspace-member-deletion-from-clerk',
+        triggers: [{ event: 'clerk/organization.rejected' }]
+    },
+    async ({ event }) => {
+        const { data } = event;
+
+        const result = await prisma.workspaceMember.deleteMany({
+            where: {
+                userId: data.user_id,
+                workspaceId: data.organization_id
+            }
+        });
+
+        return {
+            message: result.count > 0 ? `Workspace member removed: ${data.user_id}` : 'Member not found',
+            deleted: result.count > 0
+        };
+    }
+);
 
 export const functions = [
     syncUserCreation,
@@ -196,5 +280,6 @@ export const functions = [
     syncWorkspaceCreation,
     syncWorkspaceDeletion,
     syncWorkspaceUpdation,
-    syncWorkspaceMemeberCreation
+    syncWorkspaceMemberCreation,
+    syncWorkspaceMemberDeletion
 ];
