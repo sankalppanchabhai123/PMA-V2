@@ -7,7 +7,7 @@
             "config": {
                 "includeFiles": [
                     "prisma/**",
-                    "node_modules/.prisma/**"
+                    "prisma.config.ts"
                 ]
             }
         }
