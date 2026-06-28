@@ -40,7 +40,7 @@ export const dummyUsers = [
 export const dummyWorkspaces = [
     {
         "id": "org_1",
-        "name": "Corp Workspace",
+        "name": "Zomato",
         "slug": "corp-workspace",
         "description": null,
         "settings": {},
@@ -257,7 +257,7 @@ export const dummyWorkspaces = [
     },
     {
         "id": "org_2",
-        "name": "Cloud Ops Hub",
+        "name": "Uber",
         "slug": "cloud-ops-hub",
         "description": null,
         "settings": {},

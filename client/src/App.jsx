@@ -6,6 +6,7 @@ import Projects from "./pages/Projects";
 import Team from "./pages/Team";
 import ProjectDetails from "./pages/ProjectDetails";
 import TaskDetails from "./pages/TaskDetails";
+import { Show, SignInButton, SignUpButton, UserButton } from '@clerk/react'
 
 const App = () => {
     return (
