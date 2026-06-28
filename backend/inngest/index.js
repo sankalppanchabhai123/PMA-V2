@@ -106,7 +106,7 @@ const syncUserUpdation = inngest.createFunction(
     },
 );
 
-// ✅ FIXED: Workspace Creation
+
 const syncWorkspaceCreation = inngest.createFunction(
     {
         id: 'sync-workspace-from-clerk',
@@ -148,7 +148,7 @@ const syncWorkspaceCreation = inngest.createFunction(
     }
 );
 
-// ✅ FIXED: Workspace Update
+
 const syncWorkspaceUpdation = inngest.createFunction(
     {
         id: 'update-workspace-from-clerk',
@@ -182,7 +182,7 @@ const syncWorkspaceUpdation = inngest.createFunction(
     }
 );
 
-// ✅ FIXED: Workspace Deletion
+
 const syncWorkspaceDeletion = inngest.createFunction(
     {
         id: 'delete-workspace-from-clerk',
@@ -214,7 +214,6 @@ const syncWorkspaceDeletion = inngest.createFunction(
     }
 );
 
-// ✅ FIXED: Workspace Member Creation
 const syncWorkspaceMemberCreation = inngest.createFunction(
     {
         id: 'sync-workspace-member-from-clerk',
@@ -250,7 +249,7 @@ const syncWorkspaceMemberCreation = inngest.createFunction(
     }
 );
 
-// ✅ FIXED: Workspace Member Deletion (Bonus)
+
 const syncWorkspaceMemberDeletion = inngest.createFunction(
     {
         id: 'sync-workspace-member-deletion-from-clerk',

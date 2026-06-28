@@ -7,6 +7,7 @@
     "postinstall": "npx prisma generate",
     "start": "prisma generate && node server.js",
     "dev": "nodemon server.js",
+    "build": "prisma generate",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
     "prisma:studio": "prisma studio"
