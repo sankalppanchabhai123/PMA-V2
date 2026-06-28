@@ -1,11 +1,11 @@
 import { Inngest } from "inngest";
-import { prisma } from "../../lib/prisma";
+import { prisma } from "../lib/prisma.js";
 
 // Create a client to send and receive events
 export const inngest = new Inngest({ id: "SYNCup" });
 // inngest function to create user from clerk
 const syncUserCreation = inngest.createFunction(
-    { id: "sync-user-from-clerk", triggers: [{ event: "clerk/user.creted" }] },
+    { id: "sync-user-from-clerk", triggers: [{ event: "clerk/user.created" }] },
     async ({ event }) => {
         const { data } = event
         await prisma.user.create({
