@@ -110,4 +110,91 @@ const syncUserUpdation = inngest.createFunction(
     },
 );
 
-export const functions = [syncUserCreation, syncUserDeletion, syncUserUpdation];
+// function to webhook
+const syncWorkspaceCreation = inngest.createFunction(
+    { id: 'sync-workspace-from-clerk' },
+    { event: 'clerk/organization.created' },
+    async ({ event }) => {
+        const { data } = event;
+        await prisma.workspace.create({
+            data: {
+                id: data.id,
+                name: data.name,
+                slug: data.slug,
+                ownerId: data.ownerId,
+                image_url: data.image_url,
+            }
+        })
+        // Add creater as admin member
+        await prisma.workspaceMember.create({
+            data: {
+                userId: data.created_by,
+                workspaceId: data.id,
+                role: 'ADMIN',
+            }
+        })
+    }
+)
+
+const syncWorkspaceUpdation = inngest.createFunction(
+    { id: 'upate-workspace-from-clerk' },
+    { event: 'clerk/organization.updated' },
+    async ({ event }) => {
+        const { data } = event;
+        await prisma.workspace.update({
+            where: {
+                id: data.id
+            },
+            data: {
+                id: data.id,
+                name: data.name,
+                slug: data.slug,
+                image_url: data.image_url,
+            }
+        })
+    }
+)
+
+const syncWorkspaceDeletion = inngest.createFunction(
+    { id: 'delete-workspace-from-clerk' },
+    { event: 'clerk/organization.deleted' },
+    async ({ event }) => {
+        const { data } = event;
+        await prisma.workspace.deleted({
+            where: {
+                id: data.id
+            },
+            data: {
+                id: data.id,
+                name: data.name,
+                slug: data.slug,
+                image_url: data.image_url,
+            }
+        })
+    }
+)
+
+const syncWorkspaceMemeberCreation = inngest.createFunction(
+    { id: 'sync-workspace-member-from-clerk' },
+    { event: 'clerk/organization.accepted' },
+    async ({ event }) => {
+        const { data } = event;
+        await prisma.workspaceMember.create({
+            data: {
+                userId: data.user_id,
+                workspaceId: data.organization_id,
+                role: String(data.role_name).toUpperCase(),
+            }
+        })
+    }
+)
+
+export const functions = [
+    syncUserCreation,
+    syncUserDeletion,
+    syncUserUpdation,
+    syncWorkspaceCreation,
+    syncWorkspaceDeletion,
+    syncWorkspaceUpdation,
+    syncWorkspaceMemeberCreation
+];
