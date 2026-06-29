@@ -4,6 +4,11 @@ import cors from 'cors'
 import { clerkMiddleware, clerkClient, requireAuth, getAuth } from '@clerk/express'
 import { serve } from "inngest/express";
 import { inngest, functions } from "./inngest/index.js"
+import workspaceRouter from './routes/workspaceRoute.js';
+import { protect } from './middlewares/authMiddleware.js';
+import projectRoute from './routes/projectRoutes.js';
+import taskRouter from './routes/tasksRoutes.js';
+import commentRoute from './routes/commentRoutes.js';
 
 
 const app = express()
@@ -16,6 +21,12 @@ app.get("/", (req, res) => {
     res.send("server is live!");
 })
 app.use("/api/inngest", serve({ client: inngest, functions }));
+
+// Routes 
+app.use("/api/workspaces", protect, workspaceRouter)
+app.use("/api/projects", protect, projectRoute)
+app.use("/api/tasks", protect, taskRouter)
+app.use("/api/comments", protect, commentRoute)
 
 app.get('/protected', requireAuth(), async (req, res) => {
     // Use `getAuth()` to get the user's `userId`
